@@ -12,7 +12,7 @@ import seaborn as sns
 
 
 # s2
-df=pd.read_csv("../data/Churn_Modelling.csv")
+df=pd.read_csv("data/Churn_Modelling.csv")
 
 
 # Drop useless columns
@@ -25,6 +25,7 @@ df=pd.get_dummies(df,columns=['Geography'])
 
 # Features & target
 X=df.drop('Exited',axis=1)
+# X=df[['CreditScore','Gender','Age','Tenure','NumOfProducts','HasCrCard','IsActiveMember','EstimatedSalary','Geography_France','Geography_Germany','Geography_Spain']]
 y=df['Exited']
 
 # Split
