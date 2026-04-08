@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from xgboost import XGBClassifier # Higher performance model
 
 
-df = pd.read_csv("Churn_Modelling.csv")
+df = pd.read_csv("data/Churn_Modelling.csv")
 df = df.drop(['RowNumber', 'CustomerId', 'Surname'], axis=1)
 
 

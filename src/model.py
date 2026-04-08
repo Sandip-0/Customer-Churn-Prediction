@@ -12,7 +12,8 @@ import seaborn as sns
 
 
 # s2
-df=pd.read_csv("Churn_Modelling.csv")
+df=pd.read_csv("../data/Churn_Modelling.csv")
+
 
 # Drop useless columns
 df=df.drop(['RowNumber','CustomerId','Surname'],axis=1)
