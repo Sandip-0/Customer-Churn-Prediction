@@ -1,61 +1,78 @@
+# s1
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt # Corrected import
-import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix,mean_absolute_error,mean_squared_error,classification_report
+from sklearn.linear_model import LinearRegression,LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix
-from xgboost import XGBClassifier # Higher performance model
+from sklearn.ensemble import RandomForestClassifier
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+
+# s2
+df=pd.read_csv("data/Churn_Modelling.csv")
 
 
-df = pd.read_csv("data/Churn_Modelling.csv")
-df = df.drop(['RowNumber', 'CustomerId', 'Surname'], axis=1)
+# Drop useless columns
+df=df.drop(['RowNumber','CustomerId','Surname'],axis=1)
+
+# Encoding
+df['Gender'] = df['Gender'].map({'Male':0,'Female':1})
+df=pd.get_dummies(df,columns=['Geography'])
 
 
-df['BalanceSalaryRatio'] = df['Balance'] / (df['EstimatedSalary'] + 1)
+# Features & target
+X=df.drop('Exited',axis=1)
+# X=df[['CreditScore','Gender','Age','Tenure','NumOfProducts','HasCrCard','IsActiveMember','EstimatedSalary','Geography_France','Geography_Germany','Geography_Spain']]
+y=df['Exited']
 
-df['TenureByAge'] = df['Tenure'] / (df['Age'] + 1)
-
-df['CreditActive'] = df['HasCrCard'] * df['IsActiveMember']
-# Encoding 
-df['Gender'] = df['Gender'].map({'Male': 0, 'Female': 1})
-df = pd.get_dummies(df, columns=['Geography'], drop_first=True)
-
-
-X = df.drop('Exited', axis=1)
-y = df['Exited']
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+# Split
+X_train,X_test,y_train,y_test=train_test_split(
+    X,y,random_state=42,test_size=0.2
 )
 
-# --- s6: Scaling ---
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+# Model
+
+models = {
+    "Logistic Regression": LogisticRegression(max_iter=1000),
+    "Decision Tree": DecisionTreeClassifier(),
+    "Random Forest": RandomForestClassifier(n_estimators=200, class_weight='balanced')
+}
 
 
-
-model = XGBClassifier(
-    n_estimators=100, 
-    learning_rate=0.1, 
-    max_depth=5, 
-    scale_pos_weight=4, 
-    random_state=42
-)
-model.fit(X_train, y_train)
+# Train & Compare
+results = []
 
 
-pred = model.predict(X_test)
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
 
-print('--- Optimized Classification Report ---')
-print(classification_report(y_test, pred))
+    results.append({
+        "Model": name,
+        "Accuracy": accuracy_score(y_test, pred),
+        "Precision": precision_score(y_test, pred),
+        "Recall": recall_score(y_test, pred),
+        "F1 Score": f1_score(y_test, pred),
+        "ROC-AUC": roc_auc_score(y_test, pred)
+    })
 
 
-plt.figure(figsize=(8, 6))
-sns.heatmap(confusion_matrix(y_test, pred), annot=True, fmt='d', cmap='Greens')
-plt.xlabel('Predicted Label')
-plt.ylabel('True Label')
-plt.title('Improved Confusion Matrix')
+# Convert to DataFrame
+results_df = pd.DataFrame(results)
+
+# Sort by best model
+results_df = results_df.sort_values(by="F1 Score", ascending=False)
+
+print("\nModel Comparison:\n")
+print(results_df)
+
+
+# Visualization
+plt.figure(figsize=(10,6))
+sns.barplot(x="Model", y="F1 Score", data=results_df)
+plt.title("Model Comparison (F1 Score)")
+plt.xticks(rotation=20)
 plt.show()
-
